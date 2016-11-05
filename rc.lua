@@ -128,11 +128,51 @@ menubar.utils.terminal = terminal -- Set the terminal for applications that requ
 -- }}}
 
 -- {{{ Wibox
--- Create a textclock widget
-mytextclock = awful.widget.textclock()
+markup      = lain.util.markup
 
+-- Create a textclock widget
+-- mytextclock = awful.widget.textclock()
+mytextclock = lain.widgets.abase({
+    timeout  = 60,
+    cmd      = "date +'%A %d %B %R'",
+    settings = function()
+      local t_output = ""
+      local o_it = string.gmatch(output, "%S+")
+
+      for i=1,3 do t_output = t_output .. " " .. o_it(i) end
+
+      widget:set_markup(markup("#7788af", t_output) .. markup("#343639", " > ") .. markup("#de5e1e", o_it(1)) .. " ")
+    end
+})
 -- Calendar
-lain.widgets.calendar:attach(mytextclock, { font_size = 10 })
+lain.widgets.calendar:attach(mytextclock, { font_size = 8 })
+
+-- Weather
+myweather = lain.widgets.weather({
+    city_id = 1791247, -- placeholder
+    lang = "zh",
+    settings = function()
+      descr = weather_now["weather"][1]["description"]:lower()
+      units = math.floor(weather_now["main"]["temp"])
+      widget:set_markup(markup("#eca4c4", descr .. " @ " .. units .. "°C "))
+    end
+})
+
+-- CPU
+cpuwidget = lain.widgets.cpu({
+    settings = function()
+--      widget:set_markup(markup("#e33a6e", cpu_now.usage .. "% "))
+      widget:set_markup('CPU: <span color="#90ee90">'.. cpu_now.usage ..'% </span>')
+    end
+})
+
+-- MEM
+memwidget = lain.widgets.mem({
+    settings = function()
+--      widget:set_markup(markup("#e0da37", mem_now.used .. "M "))
+      widget:set_markup('Mem: <span color="#90ee90">'.. mem_now.used ..'M </span>')
+    end
+})
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -213,6 +253,10 @@ for s = 1, screen.count() do
     -- Widgets that are aligned to the right
     local right_layout = wibox.layout.fixed.horizontal()
     if s == 1 then right_layout:add(wibox.widget.systray()) end
+    right_layout:add(cpuwidget)
+    right_layout:add(memwidget)
+    right_layout:add(myweather.icon)
+    right_layout:add(myweather)
     right_layout:add(mytextclock)
     right_layout:add(mylayoutbox[s])
 
