@@ -76,15 +76,15 @@ local layouts =
 {
     awful.layout.suit.floating,
     awful.layout.suit.tile,
-    -- awful.layout.suit.tile.left,
-    -- awful.layout.suit.tile.bottom,
-    -- awful.layout.suit.tile.top,
-    -- awful.layout.suit.fair,
-    -- awful.layout.suit.fair.horizontal,
+    awful.layout.suit.tile.left,
+    awful.layout.suit.tile.bottom,
+    awful.layout.suit.tile.top,
+    awful.layout.suit.fair,
+    awful.layout.suit.fair.horizontal,
     -- awful.layout.suit.spiral,
     -- awful.layout.suit.spiral.dwindle,
     awful.layout.suit.max,
-    -- awful.layout.suit.max.fullscreen,
+    awful.layout.suit.max.fullscreen,
     awful.layout.suit.magnifier
 }
 -- }}}
@@ -102,7 +102,7 @@ end
 tags = {}
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    tags[s] = awful.tag({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }, s, layouts[1])
+    tags[s] = awful.tag({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }, s, layouts[2])
 end
 -- }}}
 
@@ -129,6 +129,7 @@ menubar.utils.terminal = terminal -- Set the terminal for applications that requ
 
 -- {{{ Wibox
 markup      = lain.util.markup
+gray   = "#9E9C9A"
 
 -- Create a textclock widget
 -- mytextclock = awful.widget.textclock()
@@ -173,6 +174,31 @@ memwidget = lain.widgets.mem({
       widget:set_markup('Mem: <span color="#90ee90">'.. mem_now.used ..'M </span>')
     end
 })
+
+-- Battery
+batwidget = lain.widgets.bat({
+    settings = function()
+      battery = "BAT1"
+      ac = "ACAD"
+      bat_header = " Bat "
+      bat_perc = bat_now.perc
+      if bat_now.ac_status == 1 then bat_perc = "Plug" end
+      widget:set_markup(markup(gray, bat_header) .. bat_perc .. " ")
+    end
+})
+
+-- ALSA volume
+volumewidget = lain.widgets.alsa({
+    settings = function()
+      volume_header = " Volume "
+      if volume_now.status == "off" then
+        volume_now.level = volume_now.level .. "M"
+      end
+
+      widget:set_markup(markup("#7493d2", volume_header) .. volume_now.level .. "% ")
+    end
+})
+
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -255,6 +281,8 @@ for s = 1, screen.count() do
     if s == 1 then right_layout:add(wibox.widget.systray()) end
     right_layout:add(cpuwidget)
     right_layout:add(memwidget)
+    right_layout:add(batwidget)
+    right_layout:add(volumewidget)
     right_layout:add(myweather.icon)
     right_layout:add(myweather)
     right_layout:add(mytextclock)
@@ -284,16 +312,39 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "Right",  awful.tag.viewnext       ),
     awful.key({ modkey,           }, "Escape", awful.tag.history.restore),
 
-    awful.key({ modkey,           }, "j",
-        function ()
-            awful.client.focus.byidx( 1)
-            if client.focus then client.focus:raise() end
-        end),
-    awful.key({ modkey,           }, "k",
-        function ()
-            awful.client.focus.byidx(-1)
-            if client.focus then client.focus:raise() end
-        end),
+    -- awful.key({ modkey,           }, "j",
+    --     function ()
+    --         awful.client.focus.byidx( 1)
+    --         if client.focus then client.focus:raise() end
+    --     end),
+    -- awful.key({ modkey,           }, "k",
+    --     function ()
+    --         awful.client.focus.byidx(-1)
+    --         if client.focus then client.focus:raise() end
+    --     end),
+
+    -- By direction client focus
+    awful.key({ modkey }, "j",
+      function()
+        awful.client.focus.bydirection("down")
+        if client.focus then client.focus:raise() end
+    end),
+    awful.key({ modkey }, "k",
+      function()
+        awful.client.focus.bydirection("up")
+        if client.focus then client.focus:raise() end
+    end),
+    awful.key({ modkey }, "h",
+      function()
+        awful.client.focus.bydirection("left")
+        if client.focus then client.focus:raise() end
+    end),
+    awful.key({ modkey }, "l",
+      function()
+        awful.client.focus.bydirection("right")
+        if client.focus then client.focus:raise() end
+    end),
+
     awful.key({ modkey,           }, "w", function () mymainmenu:show() end),
 
     -- Layout manipulation
@@ -338,6 +389,29 @@ globalkeys = awful.util.table.join(
                   awful.util.eval, nil,
                   awful.util.getdir("cache") .. "/history_eval")
               end),
+
+    -- ALSA volume control
+    awful.key({ altkey }, "Up",
+      function ()
+        os.execute(string.format("amixer set %s 1%%+", volumewidget.channel))
+        volumewidget.update()
+    end),
+    awful.key({ altkey }, "Down",
+      function ()
+        os.execute(string.format("amixer set %s 1%%-", volumewidget.channel))
+        volumewidget.update()
+    end),
+    awful.key({ altkey }, "m",
+      function ()
+        os.execute(string.format("amixer set %s toggle", volumewidget.channel))
+        volumewidget.update()
+    end),
+    awful.key({ altkey, "Control" }, "m",
+      function ()
+        os.execute(string.format("amixer set %s 100%%", volumewidget.channel))
+        volumewidget.update()
+    end),
+
     -- Menubar
     awful.key({ modkey }, "p", function() menubar.show() end)
 )
