@@ -177,9 +177,9 @@ memwidget = lain.widgets.mem({
 
 -- Battery
 batwidget = lain.widgets.bat({
+    battery = "BAT1",
+    ac = "ACAD",
     settings = function()
-      battery = "BAT1"
-      ac = "ACAD"
       bat_header = " Bat "
       bat_perc = bat_now.perc
       if bat_now.ac_status == 1 then bat_perc = "Plug" end
@@ -199,6 +199,26 @@ volumewidget = lain.widgets.alsa({
     end
 })
 
+-- Net
+-- netdownicon = wibox.widget.imagebox(beautiful.widget_netdown)
+--netdownicon.align = "middle"
+netdowninfo = wibox.widget.textbox()
+-- netupicon = wibox.widget.imagebox(beautiful.widget_netup)
+--netupicon.align = "middle"
+netupinfo = lain.widgets.net({
+    settings = function()
+      up_header = " Up "
+      down_header = " Down "
+      if iface ~= "network off" and
+        string.match(myweather._layout.text, "N/A")
+      then
+        myweather.update()
+      end
+
+      widget:set_markup(markup("#e54c62", up_header) .. net_now.sent .. " ")
+      netdowninfo:set_markup(markup("#87af5f", down_header) .. net_now.received .. " ")
+    end
+})
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -279,6 +299,8 @@ for s = 1, screen.count() do
     -- Widgets that are aligned to the right
     local right_layout = wibox.layout.fixed.horizontal()
     if s == 1 then right_layout:add(wibox.widget.systray()) end
+    right_layout:add(netdowninfo)
+    right_layout:add(netupinfo)
     right_layout:add(cpuwidget)
     right_layout:add(memwidget)
     right_layout:add(batwidget)
