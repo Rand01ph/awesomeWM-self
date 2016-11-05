@@ -13,6 +13,9 @@ local menubar = require("menubar")
 -- My additional library
 local lain = require("lain")
 
+-- A debugging func
+n = function(n) naughty.notify{title="debug", text=tostring(n)} end
+
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
 -- another config (This code will only ever execute for the fallback config)
@@ -48,13 +51,13 @@ function run_once(cmd)
   awful.util.spawn_with_shell("pgrep -u $USER -x " .. findme .. " > /dev/null || (" .. cmd .. ")")
 end
 
-run_once("emacs")
-run_once("google-chrome-stable")
+-- run_once("emacs")
 -- }}}
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, font and wallpapers.
-beautiful.init("/usr/share/awesome/themes/default/theme.lua")
+-- beautiful.init("/usr/share/awesome/themes/default/theme.lua")
+beautiful.init(awful.util.getdir("config") .. "/themes/default/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
 terminal = "termite"
@@ -130,77 +133,6 @@ mytextclock = awful.widget.textclock()
 
 -- Calendar
 lain.widgets.calendar:attach(mytextclock, { font_size = 10 })
-
--- Weather
-weathericon = wibox.widget.imagebox(beautiful.widget_weather)
-myweather = lain.widgets.weather({
-    city_id = 123456, -- placeholder
-    settings = function()
-      descr = weather_now["weather"][1]["description"]:lower()
-      units = math.floor(weather_now["main"]["temp"])
-      widget:set_markup(markup("#eca4c4", descr .. " @ " .. units .. "°C "))
-    end
-})
-
--- CPU
-cpuicon = wibox.widget.imagebox()
-cpuicon:set_image(beautiful.widget_cpu)
-cpuwidget = lain.widgets.cpu({
-    settings = function()
-      widget:set_markup(markup("#e33a6e", cpu_now.usage .. "% "))
-    end
-})
-
--- Battery
-baticon = wibox.widget.imagebox(beautiful.widget_batt)
-batwidget = lain.widgets.bat({
-    settings = function()
-      perc = bat_now.perc .. "% "
-      if bat_now.ac_status == 1 then
-        perc = perc .. "Plug "
-      end
-      widget:set_text(perc)
-    end
-})
-
--- ALSA volume
-volicon = wibox.widget.imagebox(beautiful.widget_vol)
-volumewidget = lain.widgets.alsa({
-    settings = function()
-        if volume_now.status == "off" then
-            volume_now.level = volume_now.level .. "M"
-        end
-
-        widget:set_markup(markup("#7493d2", volume_now.level .. "% "))
-    end
-})
-
--- Net
-netdownicon = wibox.widget.imagebox(beautiful.widget_netdown)
---netdownicon.align = "middle"
-netdowninfo = wibox.widget.textbox()
-netupicon = wibox.widget.imagebox(beautiful.widget_netup)
---netupicon.align = "middle"
-netupinfo = lain.widgets.net({
-    settings = function()
-        if iface ~= "network off" and
-           string.match(myweather._layout.text, "N/A")
-        then
-            myweather.update()
-        end
-
-        widget:set_markup(markup("#e54c62", net_now.sent .. " "))
-        netdowninfo:set_markup(markup("#87af5f", net_now.received .. " "))
-    end
-})
-
--- MEM
-memicon = wibox.widget.imagebox(beautiful.widget_mem)
-memwidget = lain.widgets.mem({
-    settings = function()
-        widget:set_markup(markup("#e0da37", mem_now.used .. "M "))
-    end
-})
 
 -- Create a wibox for each screen and add it
 mywibox = {}
